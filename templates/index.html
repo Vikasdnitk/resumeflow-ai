@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>resumeflow.ai</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container topbar-inner">
+        <div class="brand-wrap">
+          <div class="brand-logo" aria-hidden="true">G</div>
+          <div class="brand">resumeflow.ai</div>
+        </div>
+        <nav class="top-links">
+          <a href="#builder">Resume Builder</a>
+          <a href="#features">Features</a>
+          <a href="#history">History</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="hero">
+        <div>
+          <p class="kicker">AI Powered Resume Optimization</p>
+          <h1>Build a job-ready resume in minutes</h1>
+          <p>
+            Upload your latest resume, paste any job description from LinkedIn,
+            Naukri, or other portals, and generate ATS-focused versions with
+            downloadable professional templates.
+          </p>
+          <div class="hero-cta">
+            <a href="#builder">Optimize My Resume</a>
+            <a class="ghost" href="#features">Explore Features</a>
+          </div>
+          <div class="hero-tags">
+            <span>ATS Friendly</span>
+            <span>PDF + DOCX Export</span>
+            <span>AI Rewrite Assistant</span>
+          </div>
+        </div>
+        <div class="hero-stat card">
+          <h3>Why resumeflow.ai?</h3>
+          <ul>
+            <li>ATS keyword matching and scoring</li>
+            <li>Strict mode to preserve full CV content</li>
+            <li>3 downloadable PDF templates</li>
+            <li>AI assistant with apply-to-resume</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="features" class="feature-grid">
+        <article class="feature-item card"><h3>JD Match Engine</h3><p>Aligns resume language to target role keywords.</p></article>
+        <article class="feature-item card"><h3>Template Export</h3><p>Download polished PDF/DOCX/TXT in one click.</p></article>
+        <article class="feature-item card"><h3>Version History</h3><p>Open earlier generations and continue editing.</p></article>
+      </section>
+
+      <section id="builder" class="card form-card">
+        <div class="section-head">
+          <h2>Resume Builder</h2>
+          <p>Step 1: paste job description. Step 2: upload resume. Step 3: generate and download.</p>
+        </div>
+        <form method="post" enctype="multipart/form-data">
+          <label for="job_description">Job Description</label>
+          <textarea
+            id="job_description"
+            name="job_description"
+            placeholder="Paste complete job description here"
+            required
+          ></textarea>
+
+          <label for="resume">Upload Resume (.txt, .pdf, .docx)</label>
+          <input id="resume" name="resume" type="file" accept=".txt,.pdf,.docx" required />
+
+          <label class="inline-check" for="strict_mode">
+            <input id="strict_mode" name="strict_mode" type="checkbox" />
+            Preserve 100% content (no rewriting, append ATS keywords only)
+          </label>
+
+          <button type="submit">Generate ATS-Matched Resume</button>
+        </form>
+      </section>
+
+      {% if error %}
+      <section class="card error">{{ error }}</section>
+      {% endif %}
+
+      {% if tailored_resume %}
+      <section class="card result">
+        <div class="score">
+          <span>Estimated ATS Match Score</span>
+          <strong>{{ match_score }}%</strong>
+        </div>
+
+        <div class="template-grid">
+          <a class="template-link" href="{{ url_for('download_resume', filetype='pdf') }}?template=t1">
+            <strong>PDF Template 1</strong>
+            <span>Horizontal lines between sections</span>
+          </a>
+          <a class="template-link" href="{{ url_for('download_resume', filetype='pdf') }}?template=t2">
+            <strong>PDF Template 2</strong>
+            <span>Two-column partition layout</span>
+          </a>
+          <a class="template-link" href="{{ url_for('download_resume', filetype='pdf') }}?template=t3">
+            <strong>PDF Template 3</strong>
+            <span>Single-column classic ATS style</span>
+          </a>
+        </div>
+
+        <div class="download-row">
+          <a href="{{ url_for('download_resume', filetype='docx') }}">Download DOCX</a>
+          <a href="{{ url_for('download_resume', filetype='txt') }}">Download TXT</a>
+        </div>
+
+        <h2>Tailored Resume</h2>
+        <pre>{{ tailored_resume }}</pre>
+
+        {% if missing_keywords %}
+        <h3>Suggested Missing Keywords</h3>
+        <p>{{ missing_keywords | join(', ') }}</p>
+        {% endif %}
+
+        <form class="modify-form" method="post" action="{{ url_for('modify_resume') }}">
+          <label for="modification_text">Need another update? Tell exact modifications.</label>
+          <textarea
+            id="modification_text"
+            name="modification_text"
+            placeholder="Example: Keep same content, improve project bullets for backend role and add AWS/Redis emphasis"
+            required
+          ></textarea>
+          <button type="submit">Create Updated Version</button>
+        </form>
+      </section>
+      {% endif %}
+
+      {% if recent_generations %}
+      <section id="history" class="card history">
+        <h3>Recent Generations (Local DB)</h3>
+        <div class="history-list">
+          {% for item in recent_generations %}
+          <div class="history-item">
+            <strong>#{{ item.id }}</strong>
+            <span>{{ item.created_at }}</span>
+            <span>Mode: {{ 'Strict' if item.strict_mode else 'Optimized' }}</span>
+            <span>Score: {{ item.match_score }}%</span>
+            <p>{{ item.jd_preview }}</p>
+            <a class="history-load" href="{{ url_for('load_generation', generation_id=item.id) }}">Open this version</a>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+      {% endif %}
+
+      <section class="card chat-card">
+        <h3>AI Resume Assistant</h3>
+        <p class="chat-note">Ask for better bullets, stronger summary, keyword alignment, or role-specific edits.</p>
+        <div id="chatMessages" class="chat-messages">
+          <div class="chat-msg bot">Hi! Generate or open a resume, then ask me how to improve it.</div>
+        </div>
+        <div class="chat-actions">
+          <button id="applyChatBtn" type="button" class="secondary-btn">Apply Last AI Suggestion</button>
+        </div>
+        <form id="chatForm" class="chat-form">
+          <textarea id="chatInput" placeholder="Example: Rewrite my experience for a Python backend role with measurable outcomes" required></textarea>
+          <button type="submit">Send</button>
+        </form>
+      </section>
+    </main>
+    <script>
+      (function () {
+        const form = document.getElementById("chatForm");
+        const input = document.getElementById("chatInput");
+        const messages = document.getElementById("chatMessages");
+        const applyBtn = document.getElementById("applyChatBtn");
+        let lastBotReply = "";
+
+        function addMessage(text, role) {
+          const el = document.createElement("div");
+          el.className = `chat-msg ${role}`;
+          el.textContent = text;
+          messages.appendChild(el);
+          messages.scrollTop = messages.scrollHeight;
+        }
+
+        form.addEventListener("submit", async function (e) {
+          e.preventDefault();
+          const message = (input.value || "").trim();
+          if (!message) return;
+
+          addMessage(message, "user");
+          input.value = "";
+          addMessage("Thinking...", "bot pending");
+
+          try {
+            const res = await fetch("{{ url_for('resume_chat') }}", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ message }),
+            });
+            const data = await res.json();
+            messages.removeChild(messages.lastChild);
+            if (!res.ok) {
+              addMessage(data.error || "Something went wrong.", "bot error");
+              return;
+            }
+            const reply = data.reply || "No response received.";
+            lastBotReply = reply;
+            addMessage(reply, "bot");
+          } catch (err) {
+            messages.removeChild(messages.lastChild);
+            addMessage("Chat service unavailable. Try again.", "bot error");
+          }
+        });
+
+        applyBtn.addEventListener("click", async function () {
+          if (!lastBotReply) {
+            addMessage("Ask AI first, then apply the suggestion.", "bot error");
+            return;
+          }
+          addMessage("Applying last AI suggestion...", "bot pending");
+          try {
+            const res = await fetch("{{ url_for('apply_chat_suggestion') }}", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ suggestion: lastBotReply }),
+            });
+            const data = await res.json();
+            messages.removeChild(messages.lastChild);
+            if (!res.ok) {
+              addMessage(data.error || "Failed to apply suggestion.", "bot error");
+              return;
+            }
+            addMessage(data.message || "Applied successfully.", "bot");
+            window.location.reload();
+          } catch (err) {
+            messages.removeChild(messages.lastChild);
+            addMessage("Could not apply suggestion right now.", "bot error");
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>
