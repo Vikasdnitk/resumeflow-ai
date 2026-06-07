@@ -84,16 +84,19 @@ body::after {
 }
 
 .brand-logo {
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
+  width: 40px;
+  height: 28px;
+  border-radius: 8px;
   display: grid;
   place-items: center;
-  font-weight: 900;
+  font-weight: 800;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: #fff;
-  background: linear-gradient(145deg, #0a9396, #005f73);
+  background: linear-gradient(145deg, #1582d3, #0a4d8f);
   border: 1px solid rgba(255, 255, 255, 0.28);
-  box-shadow: 0 4px 14px rgba(0, 95, 115, 0.28);
+  box-shadow: 0 4px 14px rgba(10, 77, 143, 0.28);
 }
 
 .top-links {
@@ -399,6 +402,50 @@ button:hover {
   background: #e8f4f4;
 }
 
+.pdf-review {
+  margin-top: 1rem;
+  border: 1px solid #cbdde8;
+  border-radius: 12px;
+  background: #f7fbff;
+  overflow: hidden;
+}
+
+.review-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  align-items: center;
+  padding: 0.8rem;
+  border-bottom: 1px solid #d7e4ec;
+}
+
+.review-head h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.review-head p {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.review-head a {
+  white-space: nowrap;
+  text-decoration: none;
+  color: var(--accent);
+  font-weight: 800;
+  font-size: 0.86rem;
+}
+
+.pdf-review iframe {
+  width: 100%;
+  height: min(78vh, 760px);
+  border: 0;
+  display: block;
+  background: #fff;
+}
+
 .history h3 {
   margin: 0 0 0.7rem;
 }
@@ -603,6 +650,15 @@ pre {
 
   .hero-cta a {
     text-align: center;
+  }
+
+  .review-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .pdf-review iframe {
+    height: 560px;
   }
 
   .container {

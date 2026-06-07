@@ -16,7 +16,7 @@
     <header class="topbar">
       <div class="container topbar-inner">
         <div class="brand-wrap">
-          <div class="brand-logo" aria-hidden="true">G</div>
+          <div class="brand-logo" aria-hidden="true">RF</div>
           <div class="brand">resumeflow.ai</div>
         </div>
         <nav class="top-links">
@@ -119,6 +119,20 @@
         <div class="download-row">
           <a href="{{ url_for('download_resume', filetype='docx') }}">Download DOCX</a>
           <a href="{{ url_for('download_resume', filetype='txt') }}">Download TXT</a>
+        </div>
+
+        <div class="pdf-review">
+          <div class="review-head">
+            <div>
+              <h3>Review PDF Before Download</h3>
+              <p>Highlighted yellow areas show ATS keywords, appended updates, or user-requested modifications.</p>
+            </div>
+            <a href="{{ url_for('preview_pdf') }}" target="_blank">Open full screen</a>
+          </div>
+          <iframe
+            title="Resume PDF review preview"
+            src="{{ url_for('preview_pdf') }}"
+          ></iframe>
         </div>
 
         <h2>Tailored Resume</h2>

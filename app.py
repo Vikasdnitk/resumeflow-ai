@@ -808,6 +808,76 @@ def build_pdf_by_template(structured_resume, template_id, full_text=""):
     return build_pdf_template_3(structured_resume, full_text=full_text)
 
 
+def build_review_pdf_bytes(full_text, structured_resume):
+    if canvas is None or A4 is None:
+        raise ValueError("PDF preview requires reportlab.")
+    width, height = A4
+    left = 46
+    right = width - 46
+    y = height - 48
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
+
+    highlight_terms = (
+        "tools/keywords",
+        "additional ats keywords",
+        "ats keywords",
+        "user requested modifications",
+    )
+
+    def new_page():
+        nonlocal y
+        c.showPage()
+        y = height - 48
+        draw_header(continued=True)
+
+    def draw_header(continued=False):
+        nonlocal y
+        c.setFillColor(colors.HexColor("#0A4D8F") if colors else (0, 0, 0))
+        c.setFont("Helvetica-Bold", 14)
+        title = "Resume Review Preview" if not continued else "Resume Review Preview (continued)"
+        c.drawString(left, y, title)
+        y -= 15
+        c.setFillColor(colors.HexColor("#3E4C59") if colors else (0, 0, 0))
+        c.setFont("Helvetica", 9)
+        c.drawString(left, y, f"Candidate: {structured_resume.get('name', 'Candidate')}")
+        y -= 10
+        c.setStrokeColor(colors.HexColor("#C8D7E5") if colors else (0.8, 0.8, 0.8))
+        c.line(left, y, right, y)
+        y -= 14
+        c.setFillColor(colors.black if colors else (0, 0, 0))
+
+    def is_highlighted(line):
+        lowered = line.lower()
+        return any(term in lowered for term in highlight_terms)
+
+    draw_header()
+    c.setFont("Helvetica", 9.5)
+    for raw_line in full_text.splitlines():
+        line = raw_line.rstrip()
+        if not line:
+            y -= 8
+            continue
+
+        highlighted = is_highlighted(line)
+        font_name = "Helvetica-Bold" if line.isupper() and len(line.split()) <= 5 else "Helvetica"
+        c.setFont(font_name, 9.5)
+        wrapped = simpleSplit(line, font_name, 9.5, right - left)
+        for wrapped_line in wrapped:
+            if y < 48:
+                new_page()
+                c.setFont(font_name, 9.5)
+            if highlighted:
+                c.setFillColor(colors.HexColor("#FFF3B0") if colors else (1, 0.95, 0.6))
+                c.rect(left - 3, y - 3, right - left + 6, 13, stroke=0, fill=1)
+                c.setFillColor(colors.black if colors else (0, 0, 0))
+            c.drawString(left, y, wrapped_line)
+            y -= 12
+
+    c.save()
+    return buffer.getvalue()
+
+
 def get_latest_structured_resume():
     payload_id = session.get("latest_resume_payload_id")
     if not payload_id:
@@ -911,6 +981,22 @@ def download_resume(filetype):
         return Response("Unsupported file type.", status=400)
     except Exception as exc:
         return Response(f"Download failed: {exc}", status=400)
+
+
+@app.route("/preview/pdf", methods=["GET"])
+def preview_pdf():
+    try:
+        payload = get_latest_structured_resume()
+        structured_resume = payload.get("structured_resume", {})
+        latest_tailored_resume = payload.get("tailored_resume", "")
+        content = build_review_pdf_bytes(latest_tailored_resume, structured_resume)
+        return Response(
+            content,
+            mimetype="application/pdf",
+            headers={"Content-Disposition": "inline; filename=resume_review_preview.pdf"},
+        )
+    except Exception as exc:
+        return Response(f"Preview failed: {exc}", status=400)
 
 
 @app.route("/", methods=["GET", "POST"])
